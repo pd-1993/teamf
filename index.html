@@ -4,117 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Team Friendly Attendance</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-      margin: 0;
-    }
-
-    h1 {
-      color: #0ff;
-      text-shadow: 0 0 10px #0ff;
-    }
-
-    input, button {
-      padding: 10px;
-      margin: 10px;
-      border-radius: 8px;
-      border: none;
-      font-size: 1rem;
-      outline: none;
-    }
-
-    input {
-      width: 60%;
-      max-width: 300px;
-    }
-
-    button {
-      background: #0ff;
-      color: #000;
-      box-shadow: 0 0 10px #0ff;
-      cursor: pointer;
-    }
-
-    .attendance-list {
-      max-height: 60vh;
-      overflow-y: auto;
-      background: rgba(255,255,255,0.05);
-      padding: 15px;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 0 10px #0ff3;
-      margin-top: 10px;
-    }
-
-    .entry {
-      border-bottom: 1px solid #333;
-      padding: 8px 0;
-      position: relative;
-    }
-
-    .name {
-      font-weight: bold;
-      color: #0ff;
-    }
-
-    .time {
-      font-size: 0.9rem;
-      color: #ccc;
-    }
-
-    .delete-btn {
-      position: absolute;
-      right: 10px;
-      top: 10px;
-      background: transparent;
-      border: none;
-      color: red;
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
-
-    .admin-login-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: #0ff;
-      color: #000;
-      border-radius: 8px;
-      padding: 8px 14px;
-      font-size: 0.9rem;
-      text-decoration: none;
-      box-shadow: 0 0 10px #0ff;
-    }
-
-    .admin-login-btn:hover {
-      background: #00e6e6;
-    }
-
-    h2 {
-      margin-top: 0;
-      color: #0ff;
-      font-size: 1rem;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <a href="admin-login.html" class="admin-login-btn">Admin Login</a>
-  <h1>Team Friendly Attendance</h1>
-  <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
-  <button id="markBtn">Submit</button>
-  <div class="attendance-list" id="attendanceList">
-    <h2>This website was created by Grace Gemino</h2>
-  </div>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
@@ -128,6 +17,12 @@
       deleteDoc,
       doc
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyD38YTq5bKvIjByFiP_EvQlaMMAbRQJRSM",
@@ -140,13 +35,36 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
     const attendanceRef = collection(db, "attendance");
 
     const nameInput = document.getElementById("nameInput");
     const markBtn = document.getElementById("markBtn");
     const attendanceList = document.getElementById("attendanceList");
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
 
-    let isAdmin = localStorage.getItem("isAdmin") === "true"; // 🟢 Admin flag
+    let isPremiumUser = false;
+
+    function displayEntry(docId, name, dateTime) {
+      const div = document.createElement("div");
+      div.className = "entry";
+      div.innerHTML = `
+        <div class="name">${name}</div>
+        <div class="time">${dateTime}</div>
+        <button class="delete-btn" data-id="${docId}" ${!isPremiumUser ? "disabled" : ""}>🗑️ Delete</button>
+      `;
+      attendanceList.appendChild(div);
+
+      const deleteBtn = div.querySelector(".delete-btn");
+      if (isPremiumUser) {
+        deleteBtn.addEventListener("click", async () => {
+          if (confirm("Are you sure you want to delete this entry?")) {
+            await deleteDoc(doc(db, "attendance", docId));
+          }
+        });
+      }
+    }
 
     async function markAttendance() {
       const name = nameInput.value.trim();
@@ -159,7 +77,9 @@
 
       const now = new Date();
       const dateTime = now.toLocaleDateString(undefined, {
-        year: "numeric", month: "long", day: "numeric"
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       }) + " – " + now.toLocaleTimeString();
 
       await addDoc(attendanceRef, {
@@ -171,47 +91,140 @@
       nameInput.value = "";
     }
 
-    function displayEntry(docId, name, dateTime) {
-      const div = document.createElement("div");
-      div.className = "entry";
-      div.innerHTML = `
-        <div class="name">${name}</div>
-        <div class="time">${dateTime}</div>
-        <button class="delete-btn" data-id="${docId}">🗑️ Delete</button>
-      `;
-      attendanceList.appendChild(div);
-
-      const deleteBtn = div.querySelector(".delete-btn");
-      deleteBtn.addEventListener("click", async () => {
-        if (!isAdmin) {
-          alert("Access denied. Only admin can delete.");
-          return;
-        }
-
-        if (confirm("Are you sure you want to delete this entry?")) {
-          await deleteDoc(doc(db, "attendance", docId));
-        }
-      });
-    }
-
     markBtn.addEventListener("click", markAttendance);
     nameInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") markAttendance();
     });
 
-    window.addEventListener("DOMContentLoaded", () => {
-      const savedName = localStorage.getItem("userName");
-      if (savedName) nameInput.value = savedName;
+    loginBtn.addEventListener("click", async () => {
+      const email = prompt("Enter your premium email:");
+      const password = prompt("Enter your password:");
+      if (!email || !password) return;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        alert("Login successful!");
+      } catch (error) {
+        alert("Login failed: " + error.message);
+      }
     });
 
-    const q = query(attendanceRef, orderBy("created", "desc"));
-    onSnapshot(q, (snapshot) => {
-      attendanceList.innerHTML = "<h2>Submit your Full name to say Present</h2>";
-      snapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        displayEntry(docSnap.id, data.name, data.dateTime);
+    logoutBtn.addEventListener("click", async () => {
+      await signOut(auth);
+      alert("Logged out.");
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      isPremiumUser = !!user;
+      attendanceList.innerHTML = "";
+      const q = query(attendanceRef, orderBy("created", "desc"));
+      onSnapshot(q, (snapshot) => {
+        attendanceList.innerHTML = "<h2>Submit your Full name to say Present</h2>";
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          displayEntry(docSnap.id, data.name, data.dateTime);
+        });
       });
+
+      // Update buttons visibility
+      loginBtn.style.display = user ? "none" : "inline-block";
+      logoutBtn.style.display = user ? "inline-block" : "none";
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedName = localStorage.getItem("userName");
+      if (savedName) {
+        nameInput.value = savedName;
+      }
     });
   </script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+    h1 {
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 1rem;
+      outline: none;
+    }
+    input {
+      width: 60%;
+      max-width: 300px;
+    }
+    button {
+      background: #0ff;
+      color: #000;
+      box-shadow: 0 0 10px #0ff;
+      cursor: pointer;
+    }
+    .attendance-list {
+      max-height: 60vh;
+      overflow-y: auto;
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 0 10px #0ff3;
+      margin-top: 10px;
+    }
+    .entry {
+      border-bottom: 1px solid #333;
+      padding: 8px 0;
+      position: relative;
+    }
+    .name {
+      font-weight: bold;
+      color: #0ff;
+    }
+    .time {
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+    .delete-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      background: transparent;
+      border: none;
+      color: red;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+    .delete-btn[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .button-row {
+      display: flex;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Team Friendly Attendance</h1>
+  <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
+  <div class="button-row">
+    <button id="markBtn">Submit</button>
+    <button id="loginBtn">Premium Login</button>
+    <button id="logoutBtn" style="display:none;">Logout</button>
+  </div>
+  <div class="attendance-list" id="attendanceList">
+    <h2>This website was created by Grace Gemino</h2>
+  </div>
 </body>
 </html>
