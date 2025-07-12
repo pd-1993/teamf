@@ -2,145 +2,112 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Login - Team Friendly</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login Page</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #111;
+      background-color: #111;
       color: #fff;
+      font-family: Arial, sans-serif;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
       height: 100vh;
       margin: 0;
     }
 
-    .login-box {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #0ff3;
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
       width: 90%;
-      max-width: 350px;
-      text-align: center;
-    }
-
-    h1 {
-      color: #0ff;
-      text-shadow: 0 0 10px #0ff;
-      margin-bottom: 20px;
-    }
-
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-      outline: none;
+      max-width: 300px;
     }
 
     input {
-      background: #222;
-      color: #fff;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
     }
 
     button {
-      background: #0ff;
-      color: #000;
+      padding: 10px;
+      background: #28a745;
+      border: none;
+      color: white;
       font-weight: bold;
+      border-radius: 5px;
       cursor: pointer;
-      box-shadow: 0 0 10px #0ff;
-    }
-
-    button:hover {
-      background: #00e6e6;
     }
 
     .error {
-      color: red;
-      font-size: 0.9rem;
-      margin-top: 5px;
+      color: #f44336;
+      font-size: 14px;
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <h1>Admin Login</h1>
-    <input type="email" id="email" placeholder="Admin Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button id="loginBtn">Login</button>
-    <div id="errorMessage" class="error"></div>
-  </div>
+  <h2>Login or Create Account</h2>
+  <form id="authForm">
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button type="submit" id="loginBtn">Login</button>
+    <button type="button" id="signupBtn">Create Account</button>
+    <div class="error" id="error"></div>
+  </form>
 
   <script type="module">
-    // ✅ Import Firebase modules
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
       getAuth,
       signInWithEmailAndPassword,
-      onAuthStateChanged
+      createUserWithEmailAndPassword,
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
-    // ✅ Firebase config for "team-friendly" project
     const firebaseConfig = {
       apiKey: "AIzaSyD38YTq5bKvIjByFiP_EvQlaMMAbRQJRSM",
       authDomain: "team-friendly.firebaseapp.com",
       projectId: "team-friendly",
-      storageBucket: "team-friendly.appspot.com", // ✅ Corrected domain
+      storageBucket: "team-friendly.appspot.com",
       messagingSenderId: "840633765226",
       appId: "1:840633765226:web:6382dfaac5595df002a913"
     };
 
-    // ✅ Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const ADMIN_EMAIL = "admin@teamfriendly.com"; // ✅ Your admin email
-
+    const form = document.getElementById("authForm");
     const loginBtn = document.getElementById("loginBtn");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const errorMessage = document.getElementById("errorMessage");
+    const signupBtn = document.getElementById("signupBtn");
+    const errorDiv = document.getElementById("error");
 
-    // ✅ Auto-redirect if already logged in as admin
-    onAuthStateChanged(auth, (user) => {
-      if (user && user.email === ADMIN_EMAIL) {
-        localStorage.setItem("isAdmin", "true");
-        window.location.href = "index.html";
+    // Login
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        localStorage.setItem("user", JSON.stringify(email));
+        window.location.href = "index.html"; // redirect after login
+      } catch (err) {
+        errorDiv.textContent = "Login failed: " + err.message;
       }
     });
 
-    // ✅ Login handler
-    loginBtn.addEventListener("click", async () => {
-      const email = emailInput.value.trim();
-      const password = passwordInput.value.trim();
-      errorMessage.textContent = "";
-
-      if (!email || !password) {
-        errorMessage.textContent = "Please enter both email and password.";
-        return;
-      }
+    // Sign up
+    signupBtn.addEventListener("click", async () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
       try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        if (user.email === ADMIN_EMAIL) {
-          localStorage.setItem("isAdmin", "true");
-          alert("Admin login successful!");
-          window.location.href = "index.html";
-        } else {
-          errorMessage.textContent = "Access denied. You are not the admin.";
-        }
-      } catch (error) {
-        let msg = "Login failed.";
-        if (error.code === "auth/user-not-found") msg = "User not found.";
-        if (error.code === "auth/wrong-password") msg = "Incorrect password.";
-        if (error.code === "auth/invalid-email") msg = "Invalid email format.";
-        errorMessage.textContent = msg;
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("Account created! You can now log in.");
+      } catch (err) {
+        errorDiv.textContent = "Signup failed: " + err.message;
       }
     });
   </script>
