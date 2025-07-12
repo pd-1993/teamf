@@ -69,38 +69,51 @@
 <body>
   <div class="login-box">
     <h1>Admin Login</h1>
-    <input type="email" id="email" placeholder="Admin Email" required />
-    <input type="password" id="password" placeholder="Password" required />
+    <input type="email" id="email" placeholder="Admin Email" />
+    <input type="password" id="password" placeholder="Password" />
     <button id="loginBtn">Login</button>
     <div id="errorMessage" class="error"></div>
   </div>
 
   <script type="module">
+    // ✅ Import Firebase modules
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
       getAuth,
-      signInWithEmailAndPassword
+      signInWithEmailAndPassword,
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
+    // ✅ Firebase config for "team-friendly" project
     const firebaseConfig = {
       apiKey: "AIzaSyD38YTq5bKvIjByFiP_EvQlaMMAbRQJRSM",
       authDomain: "team-friendly.firebaseapp.com",
       projectId: "team-friendly",
-      storageBucket: "team-friendly.appspot.com",
+      storageBucket: "team-friendly.appspot.com", // ✅ Corrected domain
       messagingSenderId: "840633765226",
       appId: "1:840633765226:web:6382dfaac5595df002a913"
     };
 
+    // ✅ Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const ADMIN_EMAIL = "admin@teamfriendly.com"; // Replace with your real admin email
+    const ADMIN_EMAIL = "admin@teamfriendly.com"; // ✅ Your admin email
 
     const loginBtn = document.getElementById("loginBtn");
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
     const errorMessage = document.getElementById("errorMessage");
 
+    // ✅ Auto-redirect if already logged in as admin
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.email === ADMIN_EMAIL) {
+        localStorage.setItem("isAdmin", "true");
+        window.location.href = "index.html";
+      }
+    });
+
+    // ✅ Login handler
     loginBtn.addEventListener("click", async () => {
       const email = emailInput.value.trim();
       const password = passwordInput.value.trim();
@@ -112,8 +125,8 @@
       }
 
       try {
-        const result = await signInWithEmailAndPassword(auth, email, password);
-        const user = result.user;
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
 
         if (user.email === ADMIN_EMAIL) {
           localStorage.setItem("isAdmin", "true");
@@ -123,12 +136,10 @@
           errorMessage.textContent = "Access denied. You are not the admin.";
         }
       } catch (error) {
-        const msg = error.message.includes("auth/user-not-found")
-          ? "User not found."
-          : error.message.includes("auth/wrong-password")
-          ? "Incorrect password."
-          : "Login failed: " + error.message;
-
+        let msg = "Login failed.";
+        if (error.code === "auth/user-not-found") msg = "User not found.";
+        if (error.code === "auth/wrong-password") msg = "Incorrect password.";
+        if (error.code === "auth/invalid-email") msg = "Invalid email format.";
         errorMessage.textContent = msg;
       }
     });
