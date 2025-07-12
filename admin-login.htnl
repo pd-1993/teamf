@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login - Team Friendly</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff;
+    }
+    .login-container {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #0ff3;
+      width: 90%;
+      max-width: 350px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+    }
+    input {
+      background: #222;
+      color: #fff;
+    }
+    button {
+      background: #0ff;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 10px #0ff;
+    }
+    button:hover {
+      background: #00e6e6;
+    }
+    .error {
+      color: red;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>Admin Login</h1>
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button id="loginBtn">Login</button>
+    <div class="error" id="errorMessage"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD38YTq5bKvIjByFiP_EvQlaMMAbRQJRSM",
+      authDomain: "team-friendly.firebaseapp.com",
+      projectId: "team-friendly",
+      storageBucket: "team-friendly.appspot.com",
+      messagingSenderId: "840633765226",
+      appId: "1:840633765226:web:6382dfaac5595df002a913"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBtn = document.getElementById("loginBtn");
+    const errorMessage = document.getElementById("errorMessage");
+
+    loginBtn.addEventListener("click", () => {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      if (!email || !password) {
+        errorMessage.textContent = "Please fill in both fields.";
+        return;
+      }
+
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          localStorage.setItem("adminLoggedIn", "true");
+          window.location.href = "admin-dashboard.html"; // change to your admin page
+        })
+        .catch((error) => {
+          errorMessage.textContent = "Login failed: " + error.message;
+        });
+    });
+
+    // Optional: Redirect if already logged in
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.location.href = "admin-dashboard.html"; // already logged in
+      }
+    });
+  </script>
+</body>
+</html>
