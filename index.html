@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Team Friendly Attendance</title>
-
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -82,13 +81,6 @@
       cursor: pointer;
     }
 
-    h2 {
-      margin-top: 0;
-      color: #0ff;
-      font-size: 1rem;
-      text-align: center;
-    }
-
     .admin-login-btn {
       position: absolute;
       top: 20px;
@@ -105,10 +97,17 @@
     .admin-login-btn:hover {
       background: #00e6e6;
     }
+
+    h2 {
+      margin-top: 0;
+      color: #0ff;
+      font-size: 1rem;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <button id="adminLoginBtn" class="admin-login-btn">Admin Login</button>
+  <a href="admin-login.html" class="admin-login-btn">Admin Login</a>
   <h1>Team Friendly Attendance</h1>
   <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
   <button id="markBtn">Submit</button>
@@ -130,13 +129,6 @@
       doc
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyD38YTq5bKvIjByFiP_EvQlaMMAbRQJRSM",
       authDomain: "team-friendly.firebaseapp.com",
@@ -148,16 +140,13 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth(app);
     const attendanceRef = collection(db, "attendance");
 
     const nameInput = document.getElementById("nameInput");
     const markBtn = document.getElementById("markBtn");
     const attendanceList = document.getElementById("attendanceList");
-    const adminLoginBtn = document.getElementById("adminLoginBtn");
 
-    let isAdmin = false;
-    const ADMIN_EMAIL = "admin@teamfriendly.com"; // Change to your actual admin email
+    let isAdmin = localStorage.getItem("isAdmin") === "true"; // 🟢 Admin flag
 
     async function markAttendance() {
       const name = nameInput.value.trim();
@@ -170,9 +159,7 @@
 
       const now = new Date();
       const dateTime = now.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
+        year: "numeric", month: "long", day: "numeric"
       }) + " – " + now.toLocaleTimeString();
 
       await addDoc(attendanceRef, {
@@ -214,9 +201,7 @@
 
     window.addEventListener("DOMContentLoaded", () => {
       const savedName = localStorage.getItem("userName");
-      if (savedName) {
-        nameInput.value = savedName;
-      }
+      if (savedName) nameInput.value = savedName;
     });
 
     const q = query(attendanceRef, orderBy("created", "desc"));
@@ -226,34 +211,6 @@
         const data = docSnap.data();
         displayEntry(docSnap.id, data.name, data.dateTime);
       });
-    });
-
-    // Admin login
-    adminLoginBtn.addEventListener("click", async () => {
-      const email = prompt("Enter admin email:");
-      const password = prompt("Enter admin password:");
-      if (!email || !password) return;
-
-      try {
-        const result = await signInWithEmailAndPassword(auth, email, password);
-        const user = result.user;
-        if (user.email === ADMIN_EMAIL) {
-          isAdmin = true;
-          alert("Admin access granted!");
-        } else {
-          alert("You're logged in, but not the admin.");
-        }
-      } catch (err) {
-        alert("Login failed: " + err.message);
-      }
-    });
-
-    // Auto check if already logged in
-    onAuthStateChanged(auth, (user) => {
-      if (user?.email === ADMIN_EMAIL) {
-        isAdmin = true;
-        console.log("Admin already logged in");
-      }
     });
   </script>
 </body>
