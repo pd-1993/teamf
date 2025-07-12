@@ -3,56 +3,76 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Login</title>
+  <title>Admin Login - Team Friendly</title>
   <style>
     body {
+      font-family: 'Segoe UI', sans-serif;
       background: #111;
       color: #fff;
-      font-family: 'Segoe UI', sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
     }
+
     .login-box {
       background: rgba(255, 255, 255, 0.05);
       padding: 30px;
       border-radius: 10px;
       box-shadow: 0 0 10px #0ff3;
-      max-width: 300px;
       width: 90%;
+      max-width: 350px;
       text-align: center;
     }
+
+    h1 {
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff;
+      margin-bottom: 20px;
+    }
+
     input, button {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
-      border-radius: 8px;
       border: none;
+      border-radius: 8px;
       font-size: 1rem;
       outline: none;
     }
+
     input {
       background: #222;
       color: #fff;
     }
+
     button {
       background: #0ff;
       color: #000;
       font-weight: bold;
-      box-shadow: 0 0 10px #0ff;
       cursor: pointer;
+      box-shadow: 0 0 10px #0ff;
+    }
+
+    button:hover {
+      background: #00e6e6;
+    }
+
+    .error {
+      color: red;
+      font-size: 0.9rem;
+      margin-top: 5px;
     }
   </style>
 </head>
 <body>
   <div class="login-box">
-    <h2>Admin Login</h2>
+    <h1>Admin Login</h1>
     <input type="email" id="email" placeholder="Admin Email" />
     <input type="password" id="password" placeholder="Password" />
     <button id="loginBtn">Login</button>
-    <p id="error" style="color:red;"></p>
+    <div id="errorMessage" class="error"></div>
   </div>
 
   <script type="module">
@@ -62,6 +82,7 @@
       signInWithEmailAndPassword
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
+    // ✅ Your Firebase project configuration
     const firebaseConfig = {
       apiKey: "AIzaSyD38YTq5bKvIjByFiP_EvQlaMMAbRQJRSM",
       authDomain: "team-friendly.firebaseapp.com",
@@ -71,29 +92,42 @@
       appId: "1:840633765226:web:6382dfaac5595df002a913"
     };
 
+    // ✅ Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const loginBtn = document.getElementById("loginBtn");
-    const errorText = document.getElementById("error");
+    // ✅ Admin email (only this email is allowed)
+    const ADMIN_EMAIL = "admin@teamfriendly.com"; // Replace with your actual admin email
 
-    const ADMIN_EMAIL = "admin@teamfriendly.com"; // match this in index.html
+    // ✅ Login logic
+    const loginBtn = document.getElementById("loginBtn");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const errorMessage = document.getElementById("errorMessage");
 
     loginBtn.addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      if (!email || !password) return;
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      if (!email || !password) {
+        errorMessage.textContent = "Please enter email and password.";
+        return;
+      }
 
       try {
-        const result = await signInWithEmailAndPassword(auth, email, password);
-        if (result.user.email === ADMIN_EMAIL) {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        if (user.email === ADMIN_EMAIL) {
+          // ✅ Admin verified
           localStorage.setItem("isAdmin", "true");
+          alert("Admin access granted!");
           window.location.href = "index.html"; // or attendance.html
         } else {
-          errorText.textContent = "Not an admin.";
+          errorMessage.textContent = "Access denied. Not an admin.";
         }
-      } catch (err) {
-        errorText.textContent = "Login failed: " + err.message;
+      } catch (error) {
+        errorMessage.textContent = "Login failed: " + error.message;
       }
     });
   </script>
