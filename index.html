@@ -4,24 +4,177 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Team Friendly Attendance</title>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --main-glow: #00ffff;
+      --accent: #0ff;
+      --bg-dark: #0b0b0b;
+      --text-light: #fff;
+      --entry-bg: rgba(255, 255, 255, 0.05);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      font-size: 2em;
+      margin-top: 40px;
+      color: var(--accent);
+      text-shadow: 0 0 12px var(--accent), 0 0 25px var(--accent);
+    }
+
+    input {
+      padding: 12px;
+      width: 80%;
+      max-width: 400px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1rem;
+      outline: none;
+      margin: 20px 0;
+      text-align: center;
+      box-shadow: 0 0 8px var(--accent);
+      background: #111;
+      color: var(--text-light);
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      background: var(--accent);
+      color: #000;
+      box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent);
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px var(--accent), 0 0 30px var(--accent);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .attendance-list {
+      width: 100%;
+      max-width: 500px;
+      background: var(--entry-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px #0ff3;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .attendance-list h2 {
+      margin-top: 0;
+      color: #ccc;
+      font-weight: 400;
+      text-align: center;
+    }
+
+    .entry {
+      border-bottom: 1px solid #333;
+      padding: 10px;
+      position: relative;
+    }
+
+    .name {
+      font-weight: bold;
+      color: var(--accent);
+    }
+
+    .time {
+      font-size: 0.9rem;
+      color: #bbb;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: red;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .delete-btn[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .top-right-buttons {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 999;
+    }
+
+    @media (max-width: 600px) {
+      .top-right-buttons {
+        flex-direction: column;
+        top: 10px;
+        right: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Top-right corner buttons -->
+  <div class="top-right-buttons">
+    <button id="loginBtn">Premium Login</button>
+    <button id="logoutBtn" style="display: none;">Logout</button>
+  </div>
+
+  <h1>Team Friendly Attendance</h1>
+  <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
+
+  <div class="button-row">
+    <button id="markBtn">Submit</button>
+  </div>
+
+  <div class="attendance-list" id="attendanceList">
+    <h2>This website was created by Grace Gemino</h2>
+  </div>
+
+  <!-- Firebase + Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
-      getFirestore,
-      collection,
-      addDoc,
-      onSnapshot,
-      serverTimestamp,
-      query,
-      orderBy,
-      deleteDoc,
-      doc
+      getFirestore, collection, addDoc, onSnapshot,
+      serverTimestamp, query, orderBy, deleteDoc, doc
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
     import {
-      getAuth,
-      signInWithEmailAndPassword,
-      onAuthStateChanged,
-      signOut
+      getAuth, signInWithEmailAndPassword,
+      onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -52,7 +205,7 @@
       div.innerHTML = `
         <div class="name">${name}</div>
         <div class="time">${dateTime}</div>
-        <button class="delete-btn" data-id="${docId}" ${!isPremiumUser ? "disabled" : ""}>🗑️ Delete</button>
+        <button class="delete-btn" data-id="${docId}" ${!isPremiumUser ? "disabled" : ""}>🗑️</button>
       `;
       attendanceList.appendChild(div);
 
@@ -68,18 +221,13 @@
 
     async function markAttendance() {
       const name = nameInput.value.trim();
-      if (!name) {
-        alert("Please enter your name.");
-        return;
-      }
+      if (!name) return alert("Please enter your name.");
 
       localStorage.setItem("userName", name);
 
       const now = new Date();
       const dateTime = now.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
+        year: "numeric", month: "long", day: "numeric",
       }) + " – " + now.toLocaleTimeString();
 
       await addDoc(attendanceRef, {
@@ -125,7 +273,6 @@
         });
       });
 
-      // Update buttons visibility
       loginBtn.style.display = user ? "none" : "inline-block";
       logoutBtn.style.display = user ? "inline-block" : "none";
     });
@@ -137,110 +284,5 @@
       }
     });
   </script>
-
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #111;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-      margin: 0;
-      position: relative;
-    }
-    h1 {
-      color: #0ff;
-      text-shadow: 0 0 10px #0ff;
-    }
-    input, button {
-      padding: 10px;
-      margin: 10px;
-      border-radius: 8px;
-      border: none;
-      font-size: 1rem;
-      outline: none;
-    }
-    input {
-      width: 60%;
-      max-width: 300px;
-    }
-    button {
-      background: #0ff;
-      color: #000;
-      box-shadow: 0 0 10px #0ff;
-      cursor: pointer;
-    }
-    .attendance-list {
-      max-height: 60vh;
-      overflow-y: auto;
-      background: rgba(255,255,255,0.05);
-      padding: 15px;
-      border-radius: 10px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0 0 10px #0ff3;
-      margin-top: 10px;
-    }
-    .entry {
-      border-bottom: 1px solid #333;
-      padding: 8px 0;
-      position: relative;
-    }
-    .name {
-      font-weight: bold;
-      color: #0ff;
-    }
-    .time {
-      font-size: 0.9rem;
-      color: #ccc;
-    }
-    .delete-btn {
-      position: absolute;
-      right: 10px;
-      top: 10px;
-      background: transparent;
-      border: none;
-      color: red;
-      font-size: 1.1rem;
-      cursor: pointer;
-    }
-    .delete-btn[disabled] {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    .button-row {
-      display: flex;
-      gap: 10px;
-    }
-
-    .top-right-buttons {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      display: flex;
-      gap: 10px;
-      z-index: 100;
-    }
-  </style>
-</head>
-<body>
-  <!-- Top-right corner buttons -->
-  <div class="top-right-buttons">
-    <button id="loginBtn">Premium Login</button>
-    <button id="logoutBtn" style="display:none;">Logout</button>
-  </div>
-
-  <h1>Team Friendly Attendance</h1>
-  <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
-  
-  <div class="button-row">
-    <button id="markBtn">Submit</button>
-  </div>
-
-  <div class="attendance-list" id="attendanceList">
-    <h2>This website was created by Grace Gemino</h2>
-  </div>
 </body>
 </html>
