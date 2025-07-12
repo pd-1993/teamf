@@ -148,6 +148,7 @@
       align-items: center;
       padding: 20px;
       margin: 0;
+      position: relative;
     }
     h1 {
       color: #0ff;
@@ -213,16 +214,31 @@
       display: flex;
       gap: 10px;
     }
+
+    .top-right-buttons {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
   </style>
 </head>
 <body>
-  <h1>Team Friendly Attendance</h1>
-  <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
-  <div class="button-row">
-    <button id="markBtn">Submit</button>
+  <!-- Top-right corner buttons -->
+  <div class="top-right-buttons">
     <button id="loginBtn">Premium Login</button>
     <button id="logoutBtn" style="display:none;">Logout</button>
   </div>
+
+  <h1>Team Friendly Attendance</h1>
+  <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
+  
+  <div class="button-row">
+    <button id="markBtn">Submit</button>
+  </div>
+
   <div class="attendance-list" id="attendanceList">
     <h2>This website was created by Grace Gemino</h2>
   </div>
