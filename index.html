@@ -4,143 +4,89 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Team Friendly Attendance</title>
-
   <style>
-    :root {
-      --main-glow: #00ffff;
-      --accent: #0ff;
-      --bg-dark: #0b0b0b;
-      --text-light: #fff;
-      --entry-bg: rgba(255, 255, 255, 0.05);
-    }
-
     body {
-      margin: 0;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background-color: var(--bg-dark);
-      color: var(--text-light);
+      font-family: 'Segoe UI', sans-serif;
+      background: #111;
+      color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
       padding: 20px;
-      min-height: 100vh;
+      margin: 0;
       position: relative;
-      overflow-x: hidden;
     }
-
     h1 {
-      font-size: 2em;
-      margin-top: 40px;
-      color: var(--accent);
-      text-shadow: 0 0 12px var(--accent), 0 0 25px var(--accent);
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff;
     }
-
-    input {
-      padding: 12px;
-      width: 80%;
-      max-width: 400px;
-      border-radius: 10px;
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      border-radius: 8px;
       border: none;
       font-size: 1rem;
       outline: none;
-      margin: 20px 0;
-      text-align: center;
-      box-shadow: 0 0 8px var(--accent);
-      background: #111;
-      color: var(--text-light);
     }
-
+    input {
+      width: 60%;
+      max-width: 300px;
+    }
     button {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
-      background: var(--accent);
+      background: #0ff;
       color: #000;
-      box-shadow: 0 0 10px var(--accent), 0 0 20px var(--accent);
+      box-shadow: 0 0 10px #0ff;
+      cursor: pointer;
     }
-
-    button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 15px var(--accent), 0 0 30px var(--accent);
-    }
-
-    .button-row {
-      display: flex;
-      gap: 15px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-
     .attendance-list {
-      width: 100%;
-      max-width: 500px;
-      background: var(--entry-bg);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px #0ff3;
       max-height: 60vh;
       overflow-y: auto;
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 0 10px #0ff3;
+      margin-top: 10px;
     }
-
-    .attendance-list h2 {
-      margin-top: 0;
-      color: #ccc;
-      font-weight: 400;
-      text-align: center;
-    }
-
     .entry {
       border-bottom: 1px solid #333;
-      padding: 10px;
+      padding: 8px 0;
       position: relative;
     }
-
     .name {
       font-weight: bold;
-      color: var(--accent);
+      color: #0ff;
     }
-
     .time {
       font-size: 0.9rem;
-      color: #bbb;
+      color: #ccc;
     }
-
     .delete-btn {
       position: absolute;
-      top: 10px;
       right: 10px;
+      top: 10px;
       background: transparent;
       border: none;
       color: red;
       font-size: 1.1rem;
       cursor: pointer;
     }
-
     .delete-btn[disabled] {
       opacity: 0.4;
       cursor: not-allowed;
     }
-
+    .button-row {
+      display: flex;
+      gap: 10px;
+    }
     .top-right-buttons {
       position: absolute;
       top: 20px;
       right: 20px;
       display: flex;
       gap: 10px;
-      z-index: 999;
-    }
-
-    @media (max-width: 600px) {
-      .top-right-buttons {
-        flex-direction: column;
-        top: 10px;
-        right: 10px;
-      }
+      z-index: 100;
     }
   </style>
 </head>
@@ -148,7 +94,7 @@
   <!-- Top-right corner buttons -->
   <div class="top-right-buttons">
     <button id="loginBtn">Premium Login</button>
-    <button id="logoutBtn" style="display: none;">Logout</button>
+    <button id="logoutBtn" style="display:none;">Logout</button>
   </div>
 
   <h1>Team Friendly Attendance</h1>
@@ -165,12 +111,21 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
-      getFirestore, collection, addDoc, onSnapshot,
-      serverTimestamp, query, orderBy, deleteDoc, doc
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      serverTimestamp,
+      query,
+      orderBy,
+      deleteDoc,
+      doc
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
     import {
-      getAuth, signInWithEmailAndPassword,
-      onAuthStateChanged, signOut
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -187,93 +142,99 @@
     const auth = getAuth(app);
     const attendanceRef = collection(db, "attendance");
 
-    const nameInput = document.getElementById("nameInput");
-    const markBtn = document.getElementById("markBtn");
-    const attendanceList = document.getElementById("attendanceList");
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-
     let isPremiumUser = false;
 
-    function displayEntry(docId, name, dateTime) {
-      const div = document.createElement("div");
-      div.className = "entry";
-      div.innerHTML = `
-        <div class="name">${name}</div>
-        <div class="time">${dateTime}</div>
-        <button class="delete-btn" data-id="${docId}" ${!isPremiumUser ? "disabled" : ""}>🗑️</button>
-      `;
-      attendanceList.appendChild(div);
-
-      const deleteBtn = div.querySelector(".delete-btn");
-      if (isPremiumUser) {
-        deleteBtn.addEventListener("click", async () => {
-          if (confirm("Are you sure you want to delete this entry?")) {
-            await deleteDoc(doc(db, "attendance", docId));
-          }
-        });
-      }
-    }
-
-    async function markAttendance() {
-      const name = nameInput.value.trim();
-      if (!name) return alert("Please enter your name.");
-
-      localStorage.setItem("userName", name);
-
-      const now = new Date();
-      const dateTime = now.toLocaleDateString(undefined, {
-        year: "numeric", month: "long", day: "numeric",
-      }) + " – " + now.toLocaleTimeString();
-
-      await addDoc(attendanceRef, {
-        name,
-        dateTime,
-        created: serverTimestamp()
-      });
-
-      nameInput.value = "";
-    }
-
-    markBtn.addEventListener("click", markAttendance);
-    nameInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") markAttendance();
-    });
-
-    loginBtn.addEventListener("click", async () => {
-      const email = prompt("Enter your premium email:");
-      const password = prompt("Enter your password:");
-      if (!email || !password) return;
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        alert("Login successful!");
-      } catch (error) {
-        alert("Login failed: " + error.message);
-      }
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-      alert("Logged out.");
-    });
-
-    onAuthStateChanged(auth, (user) => {
-      isPremiumUser = !!user;
-      attendanceList.innerHTML = "";
-      const q = query(attendanceRef, orderBy("created", "desc"));
-      onSnapshot(q, (snapshot) => {
-        attendanceList.innerHTML = "<h2>Submit your Full name to say Present</h2>";
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          displayEntry(docSnap.id, data.name, data.dateTime);
-        });
-      });
-
-      loginBtn.style.display = user ? "none" : "inline-block";
-      logoutBtn.style.display = user ? "inline-block" : "none";
-    });
-
     window.addEventListener("DOMContentLoaded", () => {
+      const nameInput = document.getElementById("nameInput");
+      const markBtn = document.getElementById("markBtn");
+      const attendanceList = document.getElementById("attendanceList");
+      const loginBtn = document.getElementById("loginBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
+
+      async function markAttendance() {
+        const name = nameInput.value.trim();
+        if (!name) {
+          alert("Please enter your name.");
+          return;
+        }
+
+        localStorage.setItem("userName", name);
+
+        const now = new Date();
+        const dateTime = now.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }) + " – " + now.toLocaleTimeString();
+
+        await addDoc(attendanceRef, {
+          name,
+          dateTime,
+          created: serverTimestamp()
+        });
+
+        nameInput.value = "";
+      }
+
+      function displayEntry(docId, name, dateTime) {
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.innerHTML = `
+          <div class="name">${name}</div>
+          <div class="time">${dateTime}</div>
+          <button class="delete-btn" data-id="${docId}" ${!isPremiumUser ? "disabled" : ""}>🗑️ Delete</button>
+        `;
+        attendanceList.appendChild(div);
+
+        const deleteBtn = div.querySelector(".delete-btn");
+        if (isPremiumUser) {
+          deleteBtn.addEventListener("click", async () => {
+            if (confirm("Are you sure you want to delete this entry?")) {
+              await deleteDoc(doc(db, "attendance", docId));
+            }
+          });
+        }
+      }
+
+      markBtn.addEventListener("click", markAttendance);
+      nameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") markAttendance();
+      });
+
+      loginBtn.addEventListener("click", async () => {
+        const email = prompt("Enter your premium email:");
+        const password = prompt("Enter your password:");
+        if (!email || !password) return;
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+          alert("Login successful!");
+        } catch (error) {
+          alert("Login failed: " + error.message);
+        }
+      });
+
+      logoutBtn.addEventListener("click", async () => {
+        await signOut(auth);
+        alert("Logged out.");
+      });
+
+      onAuthStateChanged(auth, (user) => {
+        isPremiumUser = !!user;
+        attendanceList.innerHTML = "";
+        const q = query(attendanceRef, orderBy("created", "desc"));
+        onSnapshot(q, (snapshot) => {
+          attendanceList.innerHTML = "<h2>Submit your Full name to say Present</h2>";
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            displayEntry(docSnap.id, data.name, data.dateTime);
+          });
+        });
+
+        loginBtn.style.display = user ? "none" : "inline-block";
+        logoutBtn.style.display = user ? "inline-block" : "none";
+      });
+
+      // Load saved name
       const savedName = localStorage.getItem("userName");
       if (savedName) {
         nameInput.value = savedName;
