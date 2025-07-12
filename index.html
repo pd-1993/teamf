@@ -108,7 +108,7 @@
   </style>
 </head>
 <body>
-  <a href="admin-login.html" class="admin-login-btn">Admin Login</a>
+  <button id="adminLoginBtn" class="admin-login-btn">Admin Login</button>
   <h1>Team Friendly Attendance</h1>
   <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
   <button id="markBtn">Submit</button>
@@ -132,10 +132,10 @@
 
     import {
       getAuth,
+      signInWithEmailAndPassword,
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyD38YTq5bKvIjByFiP_EvQlaMMAbRQJRSM",
       authDomain: "team-friendly.firebaseapp.com",
@@ -145,7 +145,6 @@
       appId: "1:840633765226:web:6382dfaac5595df002a913"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
@@ -154,13 +153,11 @@
     const nameInput = document.getElementById("nameInput");
     const markBtn = document.getElementById("markBtn");
     const attendanceList = document.getElementById("attendanceList");
+    const adminLoginBtn = document.getElementById("adminLoginBtn");
 
     let isAdmin = false;
+    const ADMIN_EMAIL = "admin@teamfriendly.com"; // change as needed
 
-    // Set your admin email here
-    const ADMIN_EMAIL = "admin@teamfriendly.com";
-
-    // Mark attendance
     async function markAttendance() {
       const name = nameInput.value.trim();
       if (!name) {
@@ -174,7 +171,7 @@
       const dateTime = now.toLocaleDateString(undefined, {
         year: "numeric",
         month: "long",
-        day: "numeric",
+        day: "numeric"
       }) + " – " + now.toLocaleTimeString();
 
       await addDoc(attendanceRef, {
@@ -186,28 +183,29 @@
       nameInput.value = "";
     }
 
-    // Display each entry
     function displayEntry(docId, name, dateTime) {
       const div = document.createElement("div");
       div.className = "entry";
       div.innerHTML = `
         <div class="name">${name}</div>
         <div class="time">${dateTime}</div>
-        ${isAdmin ? `<button class="delete-btn" data-id="${docId}">🗑️ Delete</button>` : ""}
+        <button class="delete-btn" data-id="${docId}">🗑️ Delete</button>
       `;
       attendanceList.appendChild(div);
 
-      if (isAdmin) {
-        const deleteBtn = div.querySelector(".delete-btn");
-        deleteBtn.addEventListener("click", async () => {
-          if (confirm("Are you sure you want to delete this entry?")) {
-            await deleteDoc(doc(db, "attendance", docId));
-          }
-        });
-      }
+      const deleteBtn = div.querySelector(".delete-btn");
+      deleteBtn.addEventListener("click", async () => {
+        if (!isAdmin) {
+          alert("Access denied. Only admin can delete.");
+          return;
+        }
+
+        if (confirm("Are you sure you want to delete this entry?")) {
+          await deleteDoc(doc(db, "attendance", docId));
+        }
+      });
     }
 
-    // Events
     markBtn.addEventListener("click", markAttendance);
     nameInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") markAttendance();
@@ -220,20 +218,39 @@
       }
     });
 
-    // Auth and Firestore listener
+    const q = query(attendanceRef, orderBy("created", "desc"));
+    onSnapshot(q, (snapshot) => {
+      attendanceList.innerHTML = "<h2>Submit your Full name to say Present</h2>";
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        displayEntry(docSnap.id, data.name, data.dateTime);
+      });
+    });
+
+    // Admin login on button click
+    adminLoginBtn.addEventListener("click", async () => {
+      const email = prompt("Enter admin email:");
+      const password = prompt("Enter admin password:");
+      if (!email || !password) return;
+
+      try {
+        const result = await signInWithEmailAndPassword(auth, email, password);
+        if (result.user.email === ADMIN_EMAIL) {
+          isAdmin = true;
+          alert("Admin access granted!");
+        } else {
+          alert("Logged in, but not admin.");
+        }
+      } catch (err) {
+        alert("Login failed: " + err.message);
+      }
+    });
+
+    // Auto-unlock admin if already logged in
     onAuthStateChanged(auth, (user) => {
-      if (user && user.email === ADMIN_EMAIL) {
+      if (user?.email === ADMIN_EMAIL) {
         isAdmin = true;
       }
-
-      const q = query(attendanceRef, orderBy("created", "desc"));
-      onSnapshot(q, (snapshot) => {
-        attendanceList.innerHTML = "<h2>Submit your Full name to say Present</h2>";
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          displayEntry(docSnap.id, data.name, data.dateTime);
-        });
-      });
     });
   </script>
 </body>
