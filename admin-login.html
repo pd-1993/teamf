@@ -51,6 +51,11 @@
     button:hover {
       background: #00e6e6;
     }
+    .back-button {
+      background: #444;
+      color: #fff;
+      box-shadow: none;
+    }
     .error {
       color: red;
       font-size: 0.9rem;
@@ -60,6 +65,9 @@
 </head>
 <body>
   <div class="login-container">
+    <button onclick="window.location.href='index.html'" class="back-button">
+      ⬅ Back to Home
+    </button>
     <h1>Admin Login</h1>
     <input type="email" id="email" placeholder="Email" required />
     <input type="password" id="password" placeholder="Password" required />
@@ -103,17 +111,17 @@
       signInWithEmailAndPassword(auth, email, password)
         .then(() => {
           localStorage.setItem("adminLoggedIn", "true");
-          window.location.href = "admin-dashboard.html"; // change to your admin page
+          window.location.href = "index.html"; // ✅ Go to home after login
         })
         .catch((error) => {
           errorMessage.textContent = "Login failed: " + error.message;
         });
     });
 
-    // Optional: Redirect if already logged in
+    // Redirect to home if already logged in
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        window.location.href = "admin-dashboard.html"; // already logged in
+        window.location.href = "index.html";
       }
     });
   </script>
