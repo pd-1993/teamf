@@ -136,6 +136,7 @@
       onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyD38YTq5bKvIjByFiP_EvQlaMMAbRQJRSM",
       authDomain: "team-friendly.firebaseapp.com",
@@ -156,7 +157,7 @@
     const adminLoginBtn = document.getElementById("adminLoginBtn");
 
     let isAdmin = false;
-    const ADMIN_EMAIL = "admin@teamfriendly.com"; // change as needed
+    const ADMIN_EMAIL = "admin@teamfriendly.com"; // Change to your actual admin email
 
     async function markAttendance() {
       const name = nameInput.value.trim();
@@ -227,7 +228,7 @@
       });
     });
 
-    // Admin login on button click
+    // Admin login
     adminLoginBtn.addEventListener("click", async () => {
       const email = prompt("Enter admin email:");
       const password = prompt("Enter admin password:");
@@ -235,21 +236,23 @@
 
       try {
         const result = await signInWithEmailAndPassword(auth, email, password);
-        if (result.user.email === ADMIN_EMAIL) {
+        const user = result.user;
+        if (user.email === ADMIN_EMAIL) {
           isAdmin = true;
           alert("Admin access granted!");
         } else {
-          alert("Logged in, but not admin.");
+          alert("You're logged in, but not the admin.");
         }
       } catch (err) {
         alert("Login failed: " + err.message);
       }
     });
 
-    // Auto-unlock admin if already logged in
+    // Auto check if already logged in
     onAuthStateChanged(auth, (user) => {
       if (user?.email === ADMIN_EMAIL) {
         isAdmin = true;
+        console.log("Admin already logged in");
       }
     });
   </script>
