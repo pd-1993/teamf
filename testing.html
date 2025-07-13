@@ -5,63 +5,54 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Team Friendly Portal</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
     body {
-      margin: 0;
-      padding: 20px;
       font-family: 'Segoe UI', sans-serif;
       background: #111;
       color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
+      padding: 20px;
+      margin: 0;
     }
     h1 {
       color: #0ff;
       text-shadow: 0 0 10px #0ff;
-      margin-bottom: 20px;
-    }
-    h2 {
-      margin-top: 30px;
-      color: #0ff;
-      text-shadow: 0 0 6px #0ff;
-    }
-    .section {
-      width: 100%;
-      max-width: 450px;
-      margin-bottom: 30px;
     }
     input, button {
-      width: 100%;
       padding: 10px;
-      margin-top: 10px;
-      border: none;
+      margin: 10px;
       border-radius: 8px;
+      border: none;
       font-size: 1rem;
       outline: none;
+    }
+    input {
+      width: 60%;
+      max-width: 300px;
     }
     button {
       background: #0ff;
       color: #000;
-      font-weight: bold;
-      cursor: pointer;
       box-shadow: 0 0 10px #0ff;
+      cursor: pointer;
     }
-    .list {
+    .section {
+      max-width: 500px;
+      width: 100%;
+      margin-top: 30px;
       background: rgba(255,255,255,0.05);
       padding: 15px;
       border-radius: 10px;
-      margin-top: 15px;
-      max-height: 300px;
-      overflow-y: auto;
       box-shadow: 0 0 10px #0ff3;
     }
     .entry {
-      padding: 10px 0;
       border-bottom: 1px solid #333;
+      padding: 8px 0;
       position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .name {
       font-weight: bold;
@@ -71,70 +62,35 @@
       font-size: 0.9rem;
       color: #ccc;
     }
-    .actions {
-      margin-top: 5px;
-    }
-    .delete-btn, .edit-btn, .save-btn {
-      background: none;
+    .delete-btn {
+      background: transparent;
       border: none;
-      color: #ff0;
-      font-size: 1rem;
-      margin-right: 10px;
+      color: red;
+      font-size: 1.1rem;
       cursor: pointer;
+      margin-left: 10px;
+    }
+    .edit-btn, .save-btn {
+      background: transparent;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      margin-left: 10px;
+      color: yellow;
     }
     .save-btn {
       color: #0f0;
     }
-    .edit-input {
-      width: 100%;
-      padding: 6px;
-      font-size: 1rem;
-      border-radius: 6px;
-    }
-    .auth-buttons {
-      position: fixed;
-      top: 15px;
-      right: 15px;
-      display: flex;
-      gap: 10px;
-      z-index: 1000;
-    }
-    .auth-buttons button {
-      padding: 8px 16px;
-      background: #0ff;
-      color: #000;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 0 10px #0ff;
-    }
-
-    /* Penalty Row Layout */
-    .penalty-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 0;
-      border-bottom: 1px solid #333;
-    }
-    .penalty-name {
-      flex: 1;
-      color: #0ff;
-      font-weight: bold;
-    }
-    .penalty-value {
-      flex: 1;
-      text-align: right;
-      color: #ccc;
+    .top-buttons {
+      position: absolute;
+      top: 10px;
+      right: 10px;
     }
   </style>
 </head>
 <body>
   <h1>Team Friendly Portal</h1>
-
-  <!-- Login/Logout Buttons -->
-  <div class="auth-buttons">
+  <div class="top-buttons">
     <button id="loginBtn">Login</button>
     <button id="logoutBtn" style="display: none;">Logout</button>
   </div>
@@ -144,7 +100,7 @@
     <h2>Attendance</h2>
     <input type="text" id="nameInput" placeholder="Enter your full name" />
     <button id="markBtn">Submit Attendance</button>
-    <div class="list" id="attendanceList"></div>
+    <div id="attendanceList"></div>
   </div>
 
   <!-- Penalty Section -->
@@ -153,10 +109,9 @@
     <input type="text" id="penaltyNameInput" placeholder="Enter name" />
     <input type="text" id="penaltyInput" placeholder="Enter penalty" />
     <button id="submitPenaltyBtn">Submit Penalty</button>
-    <div class="list" id="penaltyList"></div>
+    <div id="penaltyList"></div>
   </div>
 
-  <!-- Firebase Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
@@ -179,7 +134,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
-
     const attendanceRef = collection(db, "attendance");
     const penaltyRef = collection(db, "penalties");
 
@@ -195,10 +149,10 @@
 
     let currentUser = null;
 
-    // Attendance Submission
+    // Attendance
     async function markAttendance() {
       const name = nameInput.value.trim();
-      if (!name) return alert("Please enter your name.");
+      if (!name) return alert("Enter your name.");
       const now = new Date();
       const dateTime = now.toLocaleString();
       await addDoc(attendanceRef, { name, dateTime, created: serverTimestamp() });
@@ -208,89 +162,66 @@
     function displayAttendance(docId, name, time) {
       const div = document.createElement("div");
       div.className = "entry";
-
-      const nameEl = document.createElement("div");
-      nameEl.className = "name";
-      nameEl.textContent = name;
-
-      const timeEl = document.createElement("div");
-      timeEl.className = "time";
-      timeEl.textContent = time;
-
-      const actions = document.createElement("div");
-      actions.className = "actions";
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.className = "delete-btn";
-      deleteBtn.textContent = "🗑️";
-
+      div.innerHTML = `
+        <div class="name">${name}</div>
+        <div class="time">${time}</div>
+        <button class="delete-btn">🗑️</button>
+      `;
+      const deleteBtn = div.querySelector(".delete-btn");
       deleteBtn.onclick = async () => {
         if (!currentUser) return alert("Login required to delete.");
-        if (confirm("Delete this attendance entry?")) {
-          await deleteDoc(doc(db, "attendance", docId));
-        }
+        if (confirm("Delete this attendance?")) await deleteDoc(doc(db, "attendance", docId));
       };
-
-      actions.appendChild(deleteBtn);
-
-      div.appendChild(nameEl);
-      div.appendChild(timeEl);
-      div.appendChild(actions);
-
       attendanceList.appendChild(div);
     }
 
-    // Penalty Submission
+    // Penalty
     async function submitPenalty() {
       const name = penaltyNameInput.value.trim();
       const penalty = penaltyInput.value.trim();
-      if (!name || !penalty) return alert("Fill in both fields.");
+      if (!name || !penalty) return alert("Fill both name and penalty.");
       await addDoc(penaltyRef, { name, penalty, created: serverTimestamp() });
       penaltyNameInput.value = "";
       penaltyInput.value = "";
     }
 
-    function displayPenalty(docId, name, penalty) {
-      const row = document.createElement("div");
-      row.className = "penalty-row";
+    function displayPenalty(docId, name, penaltyText) {
+      const div = document.createElement("div");
+      div.className = "entry";
 
-      const nameCol = document.createElement("div");
-      nameCol.className = "penalty-name";
-      nameCol.textContent = name;
+      const nameEl = document.createElement("div");
+      nameEl.className = "name";
+      nameEl.textContent = name;
 
-      const penaltyCol = document.createElement("div");
-      penaltyCol.className = "penalty-value";
-      penaltyCol.textContent = penalty;
-
-      const actions = document.createElement("div");
-      actions.className = "actions";
+      const penaltyEl = document.createElement("div");
+      penaltyEl.className = "penalty";
+      penaltyEl.textContent = penaltyText;
 
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "delete-btn";
       deleteBtn.textContent = "🗑️";
-
-      const editBtn = document.createElement("button");
-      editBtn.className = "edit-btn";
-      editBtn.textContent = "✏️";
-
       deleteBtn.onclick = async () => {
         if (!currentUser) return alert("Login required to delete.");
         if (confirm("Delete this penalty?")) await deleteDoc(doc(db, "penalties", docId));
       };
 
+      const editBtn = document.createElement("button");
+      editBtn.className = "edit-btn";
+      editBtn.textContent = "✏️";
+
       editBtn.onclick = () => {
         if (!currentUser) return alert("Login required to edit.");
         const input = document.createElement("input");
-        input.className = "edit-input";
-        input.value = penalty;
+        input.className = "penalty";
+        input.value = penaltyText;
 
         const saveBtn = document.createElement("button");
         saveBtn.className = "save-btn";
-        saveBtn.textContent = "✅ Save";
+        saveBtn.textContent = "✅";
 
-        penaltyCol.replaceWith(input);
+        div.replaceChild(input, penaltyEl);
         editBtn.style.display = "none";
-        actions.appendChild(saveBtn);
+        div.appendChild(saveBtn);
 
         saveBtn.onclick = async () => {
           const newPenalty = input.value.trim();
@@ -299,17 +230,14 @@
         };
       };
 
-      actions.appendChild(editBtn);
-      actions.appendChild(deleteBtn);
-
-      row.appendChild(nameCol);
-      row.appendChild(penaltyCol);
-      row.appendChild(actions);
-
-      penaltyList.appendChild(row);
+      div.appendChild(nameEl);
+      div.appendChild(penaltyEl);
+      div.appendChild(editBtn);
+      div.appendChild(deleteBtn);
+      penaltyList.appendChild(div);
     }
 
-    // Real-time listeners
+    // Realtime Listeners
     onSnapshot(query(attendanceRef, orderBy("created", "desc")), snapshot => {
       attendanceList.innerHTML = "";
       snapshot.forEach(doc => {
@@ -332,7 +260,7 @@
     nameInput.addEventListener("keydown", e => { if (e.key === "Enter") markAttendance(); });
     penaltyInput.addEventListener("keydown", e => { if (e.key === "Enter") submitPenalty(); });
 
-    // Firebase Auth
+    // Auth
     loginBtn.onclick = () => {
       const email = prompt("Admin Email:");
       const password = prompt("Password:");
