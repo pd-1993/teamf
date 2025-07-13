@@ -53,15 +53,21 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
     }
     .name {
       font-weight: bold;
       color: #0ff;
     }
-    .time, .penalty {
-  font-size: 0.9rem;
-  color: red;
-  font-weight: bold;
+    .time {
+      font-size: 0.9rem;
+      color: #ccc;
+      width: 100%;
+    }
+    .penalty {
+      font-size: 0.9rem;
+      color: red;
+      font-weight: bold;
     }
     .delete-btn {
       background: transparent;
@@ -150,7 +156,7 @@
 
     let currentUser = null;
 
-    // Attendance
+    // Attendance Functions
     async function markAttendance() {
       const name = nameInput.value.trim();
       if (!name) return alert("Enter your name.");
@@ -176,7 +182,7 @@
       attendanceList.appendChild(div);
     }
 
-    // Penalty
+    // Penalty Functions
     async function submitPenalty() {
       const name = penaltyNameInput.value.trim();
       const penalty = penaltyInput.value.trim();
@@ -238,7 +244,7 @@
       penaltyList.appendChild(div);
     }
 
-    // Realtime Listeners
+    // Real-time Listeners
     onSnapshot(query(attendanceRef, orderBy("created", "desc")), snapshot => {
       attendanceList.innerHTML = "";
       snapshot.forEach(doc => {
@@ -255,13 +261,10 @@
       });
     });
 
-    // Event Listeners
+    // Auth & Events
     markBtn.onclick = markAttendance;
     submitPenaltyBtn.onclick = submitPenalty;
-    nameInput.addEventListener("keydown", e => { if (e.key === "Enter") markAttendance(); });
-    penaltyInput.addEventListener("keydown", e => { if (e.key === "Enter") submitPenalty(); });
 
-    // Auth
     loginBtn.onclick = () => {
       const email = prompt("Admin Email:");
       const password = prompt("Password:");
