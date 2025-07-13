@@ -109,6 +109,25 @@
       cursor: pointer;
       box-shadow: 0 0 10px #0ff;
     }
+
+    /* Penalty Row Layout */
+    .penalty-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #333;
+    }
+    .penalty-name {
+      flex: 1;
+      color: #0ff;
+      font-weight: bold;
+    }
+    .penalty-value {
+      flex: 1;
+      text-align: right;
+      color: #ccc;
+    }
   </style>
 </head>
 <body>
@@ -186,10 +205,38 @@
       nameInput.value = "";
     }
 
-    function displayAttendance(name, time) {
+    function displayAttendance(docId, name, time) {
       const div = document.createElement("div");
       div.className = "entry";
-      div.innerHTML = `<div class="name">${name}</div><div class="time">${time}</div>`;
+
+      const nameEl = document.createElement("div");
+      nameEl.className = "name";
+      nameEl.textContent = name;
+
+      const timeEl = document.createElement("div");
+      timeEl.className = "time";
+      timeEl.textContent = time;
+
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "delete-btn";
+      deleteBtn.textContent = "🗑️";
+
+      deleteBtn.onclick = async () => {
+        if (!currentUser) return alert("Login required to delete.");
+        if (confirm("Delete this attendance entry?")) {
+          await deleteDoc(doc(db, "attendance", docId));
+        }
+      };
+
+      actions.appendChild(deleteBtn);
+
+      div.appendChild(nameEl);
+      div.appendChild(timeEl);
+      div.appendChild(actions);
+
       attendanceList.appendChild(div);
     }
 
@@ -204,16 +251,16 @@
     }
 
     function displayPenalty(docId, name, penalty) {
-      const div = document.createElement("div");
-      div.className = "entry";
+      const row = document.createElement("div");
+      row.className = "penalty-row";
 
-      const nameEl = document.createElement("div");
-      nameEl.className = "name";
-      nameEl.textContent = name;
+      const nameCol = document.createElement("div");
+      nameCol.className = "penalty-name";
+      nameCol.textContent = name;
 
-      const penaltyEl = document.createElement("div");
-      penaltyEl.className = "penalty";
-      penaltyEl.textContent = penalty;
+      const penaltyCol = document.createElement("div");
+      penaltyCol.className = "penalty-value";
+      penaltyCol.textContent = penalty;
 
       const actions = document.createElement("div");
       actions.className = "actions";
@@ -241,7 +288,7 @@
         saveBtn.className = "save-btn";
         saveBtn.textContent = "✅ Save";
 
-        penaltyEl.replaceWith(input);
+        penaltyCol.replaceWith(input);
         editBtn.style.display = "none";
         actions.appendChild(saveBtn);
 
@@ -255,10 +302,11 @@
       actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
 
-      div.appendChild(nameEl);
-      div.appendChild(penaltyEl);
-      div.appendChild(actions);
-      penaltyList.appendChild(div);
+      row.appendChild(nameCol);
+      row.appendChild(penaltyCol);
+      row.appendChild(actions);
+
+      penaltyList.appendChild(row);
     }
 
     // Real-time listeners
@@ -266,7 +314,7 @@
       attendanceList.innerHTML = "";
       snapshot.forEach(doc => {
         const data = doc.data();
-        displayAttendance(data.name, data.dateTime);
+        displayAttendance(doc.id, data.name, data.dateTime);
       });
     });
 
