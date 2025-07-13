@@ -18,6 +18,13 @@
     h1 {
       color: #0ff;
       text-shadow: 0 0 10px #0ff;
+      margin-bottom: 5px;
+    }
+    #clock {
+      font-size: 1.1rem;
+      color: #0ff;
+      text-shadow: 0 0 5px #0ff;
+      margin-bottom: 15px;
     }
     input, button {
       padding: 10px;
@@ -57,6 +64,11 @@
       font-weight: bold;
       color: #0ff;
     }
+    .present {
+      color: yellow;
+      font-weight: bold;
+      margin-left: 10px;
+    }
     .time {
       font-size: 0.9rem;
       color: #ccc;
@@ -80,6 +92,7 @@
 </head>
 <body>
   <h1>Team Friendly Attendance</h1>
+  <div id="clock">Loading time...</div>
   <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
   <button id="markBtn">Submit</button>
   <button id="loginBtn">Login</button>
@@ -136,7 +149,7 @@
       const div = document.createElement("div");
       div.className = "entry";
       div.innerHTML = `
-        <div class="name">${name}</div>
+        <div class="name">${name}<span class="present">Present</span></div>
         <div class="time">${dateTime}</div>
         <button class="delete-btn" data-id="${docId}">🗑️ Delete</button>
       `;
@@ -229,6 +242,21 @@
         loginBtn.style.display = "inline";
       }
     });
+
+    // Live Clock Script
+    function updateClock() {
+      const now = new Date();
+      const date = now.toLocaleDateString(undefined, {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const time = now.toLocaleTimeString();
+      document.getElementById('clock').textContent = `${date} – ${time}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock(); // Initial run
   </script>
 </body>
 </html>
