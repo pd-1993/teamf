@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -50,20 +51,26 @@
     .entry {
       border-bottom: 1px solid #333;
       padding: 8px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       position: relative;
     }
     .name {
       font-weight: bold;
       color: #0ff;
-    }
-    .time {
-      font-size: 0.9rem;
-      color: #ccc;
+      flex: 1;
     }
     .penalty {
       font-size: 0.9rem;
       color: red;
       font-weight: bold;
+      text-align: right;
+      margin-left: 10px;
+    }
+    .time {
+      font-size: 0.9rem;
+      color: #ccc;
     }
     .delete-btn {
       position: absolute;
@@ -84,14 +91,21 @@
 </head>
 <body>
   <h1>Team Friendly Portal</h1>
+
   <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
   <button id="markBtn">Submit Attendance</button>
+
   <input type="text" id="penaltyNameInput" placeholder="Enter name for penalty" />
   <input type="text" id="penaltyInput" placeholder="Enter penalty" />
   <button id="submitPenaltyBtn">Submit Penalty</button>
+
   <button id="loginBtn">Login</button>
-  <button id="logoutBtn" style="display: none;">Logout</button>  <div class="list" id="attendanceList"></div>
-  <div class="list" id="penaltyList"></div>  <script type="module">
+  <button id="logoutBtn" style="display: none;">Logout</button>
+
+  <div class="list" id="attendanceList"></div>
+  <div class="list" id="penaltyList"></div>
+
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
       getFirestore,
@@ -157,7 +171,10 @@
     function displayPenalty(docId, name, penalty) {
       const div = document.createElement("div");
       div.className = "entry";
-      div.innerHTML = `<div class="name">${name}</div><div class="penalty">${penalty}</div>`;
+      div.innerHTML = `
+        <div class="name">${name}</div>
+        <div class="penalty">${penalty}</div>
+      `;
       const del = document.createElement("button");
       del.className = "delete-btn";
       del.textContent = "🗑️";
@@ -220,5 +237,6 @@
       loginBtn.style.display = user ? "none" : "inline";
       logoutBtn.style.display = user ? "inline" : "none";
     });
-  </script></body>
+  </script>
+</body>
 </html>
