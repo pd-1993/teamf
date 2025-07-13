@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -52,6 +53,11 @@
       padding: 8px 0;
       position: relative;
     }
+    .flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
     .name {
       font-weight: bold;
       color: #0ff;
@@ -84,14 +90,27 @@
 </head>
 <body>
   <h1>Team Friendly Portal</h1>
+
+  <!-- Attendance input -->
   <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
   <button id="markBtn">Submit Attendance</button>
-  <input type="text" id="penaltyNameInput" placeholder="Enter name for penalty" />
-  <input type="text" id="penaltyInput" placeholder="Enter penalty" />
-  <button id="submitPenaltyBtn">Submit Penalty</button>
+
+  <!-- Penalty input (wrapped to show/hide) -->
+  <div id="penaltyInputContainer" style="display: none;">
+    <input type="text" id="penaltyNameInput" placeholder="Enter name for penalty" />
+    <input type="text" id="penaltyInput" placeholder="Enter penalty" />
+    <button id="submitPenaltyBtn">Submit Penalty</button>
+  </div>
+
+  <!-- Login/Logout -->
   <button id="loginBtn">Login</button>
-  <button id="logoutBtn" style="display: none;">Logout</button>  <div class="list" id="attendanceList"></div>
-  <div class="list" id="penaltyList"></div>  <script type="module">
+  <button id="logoutBtn" style="display: none;">Logout</button>
+
+  <!-- Attendance and Penalty Lists -->
+  <div class="list" id="attendanceList"></div>
+  <div class="list" id="penaltyList"></div>
+
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
       getFirestore,
@@ -136,6 +155,7 @@
     const penaltyList = document.getElementById("penaltyList");
     const loginBtn = document.getElementById("loginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
+    const penaltyInputContainer = document.getElementById("penaltyInputContainer");
 
     let currentUser = null;
 
@@ -146,6 +166,7 @@
       const del = document.createElement("button");
       del.className = "delete-btn";
       del.textContent = "🗑️";
+      del.style.display = currentUser ? "inline" : "none";
       del.onclick = async () => {
         if (!currentUser) return alert("Login required to delete.");
         await deleteDoc(doc(db, "attendance", docId));
@@ -156,11 +177,15 @@
 
     function displayPenalty(docId, name, penalty) {
       const div = document.createElement("div");
-      div.className = "entry";
-      div.innerHTML = `<div class="name">${name}</div><div class="penalty">${penalty}</div>`;
+      div.className = "entry flex";
+      div.innerHTML = `
+        <div class="name">${name}</div>
+        <div class="penalty">${penalty}</div>
+      `;
       const del = document.createElement("button");
       del.className = "delete-btn";
       del.textContent = "🗑️";
+      del.style.display = currentUser ? "inline" : "none";
       del.onclick = async () => {
         if (!currentUser) return alert("Login required to delete.");
         await deleteDoc(doc(db, "penalties", docId));
@@ -219,6 +244,13 @@
       currentUser = user;
       loginBtn.style.display = user ? "none" : "inline";
       logoutBtn.style.display = user ? "inline" : "none";
+      penaltyInputContainer.style.display = user ? "block" : "none";
+
+      // Update all existing delete buttons
+      document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.style.display = user ? "inline" : "none";
+      });
     });
-  </script></body>
+  </script>
+</body>
 </html>
