@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -37,23 +36,21 @@
       box-shadow: 0 0 10px #0ff;
       cursor: pointer;
     }
-    .section {
-      max-width: 500px;
-      width: 100%;
-      margin-top: 30px;
+    .list {
+      max-height: 60vh;
+      overflow-y: auto;
       background: rgba(255,255,255,0.05);
       padding: 15px;
       border-radius: 10px;
+      width: 100%;
+      max-width: 400px;
       box-shadow: 0 0 10px #0ff3;
+      margin-top: 10px;
     }
     .entry {
       border-bottom: 1px solid #333;
       padding: 8px 0;
       position: relative;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
     }
     .name {
       font-weight: bold;
@@ -62,7 +59,6 @@
     .time {
       font-size: 0.9rem;
       color: #ccc;
-      width: 100%;
     }
     .penalty {
       font-size: 0.9rem;
@@ -70,25 +66,16 @@
       font-weight: bold;
     }
     .delete-btn {
+      position: absolute;
+      right: 10px;
+      top: 10px;
       background: transparent;
       border: none;
       color: red;
       font-size: 1.1rem;
       cursor: pointer;
-      margin-left: 10px;
     }
-    .edit-btn, .save-btn {
-      background: transparent;
-      border: none;
-      font-size: 1.1rem;
-      cursor: pointer;
-      margin-left: 10px;
-      color: yellow;
-    }
-    .save-btn {
-      color: #0f0;
-    }
-    .top-buttons {
+    #loginBtn, #logoutBtn {
       position: absolute;
       top: 10px;
       right: 10px;
@@ -97,36 +84,31 @@
 </head>
 <body>
   <h1>Team Friendly Portal</h1>
-  <div class="top-buttons">
-    <button id="loginBtn">Login</button>
-    <button id="logoutBtn" style="display: none;">Logout</button>
-  </div>
-
-  <!-- Attendance Section -->
-  <div class="section">
-    <h2>Attendance</h2>
-    <input type="text" id="nameInput" placeholder="Enter your full name" />
-    <button id="markBtn">Submit Attendance</button>
-    <div id="attendanceList"></div>
-  </div>
-
-  <!-- Penalty Section -->
-  <div class="section">
-    <h2>Penalty</h2>
-    <input type="text" id="penaltyNameInput" placeholder="Enter name" />
-    <input type="text" id="penaltyInput" placeholder="Enter penalty" />
-    <button id="submitPenaltyBtn">Submit Penalty</button>
-    <div id="penaltyList"></div>
-  </div>
-
-  <script type="module">
+  <input type="text" id="nameInput" placeholder="Enter your full name" autofocus />
+  <button id="markBtn">Submit Attendance</button>
+  <input type="text" id="penaltyNameInput" placeholder="Enter name for penalty" />
+  <input type="text" id="penaltyInput" placeholder="Enter penalty" />
+  <button id="submitPenaltyBtn">Submit Penalty</button>
+  <button id="loginBtn">Login</button>
+  <button id="logoutBtn" style="display: none;">Logout</button>  <div class="list" id="attendanceList"></div>
+  <div class="list" id="penaltyList"></div>  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
-      getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
-      query, orderBy, deleteDoc, doc, updateDoc
+      getFirestore,
+      collection,
+      addDoc,
+      onSnapshot,
+      serverTimestamp,
+      query,
+      orderBy,
+      deleteDoc,
+      doc
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
     import {
-      getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+      getAuth,
+      signInWithEmailAndPassword,
+      signOut,
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -141,6 +123,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+
     const attendanceRef = collection(db, "attendance");
     const penaltyRef = collection(db, "penalties");
 
@@ -156,122 +139,76 @@
 
     let currentUser = null;
 
-    // Attendance Functions
-    async function markAttendance() {
+    function displayAttendance(docId, name, time) {
+      const div = document.createElement("div");
+      div.className = "entry";
+      div.innerHTML = `<div class="name">${name}</div><div class="time">${time}</div>`;
+      const del = document.createElement("button");
+      del.className = "delete-btn";
+      del.textContent = "🗑️";
+      del.onclick = async () => {
+        if (!currentUser) return alert("Login required to delete.");
+        await deleteDoc(doc(db, "attendance", docId));
+      };
+      div.appendChild(del);
+      attendanceList.appendChild(div);
+    }
+
+    function displayPenalty(docId, name, penalty) {
+      const div = document.createElement("div");
+      div.className = "entry";
+      div.innerHTML = `<div class="name">${name}</div><div class="penalty">${penalty}</div>`;
+      const del = document.createElement("button");
+      del.className = "delete-btn";
+      del.textContent = "🗑️";
+      del.onclick = async () => {
+        if (!currentUser) return alert("Login required to delete.");
+        await deleteDoc(doc(db, "penalties", docId));
+      };
+      div.appendChild(del);
+      penaltyList.appendChild(div);
+    }
+
+    markBtn.onclick = async () => {
       const name = nameInput.value.trim();
-      if (!name) return alert("Enter your name.");
+      if (!name) return alert("Enter name");
       const now = new Date();
       const dateTime = now.toLocaleString();
       await addDoc(attendanceRef, { name, dateTime, created: serverTimestamp() });
       nameInput.value = "";
-    }
+    };
 
-    function displayAttendance(docId, name, time) {
-      const div = document.createElement("div");
-      div.className = "entry";
-      div.innerHTML = `
-        <div class="name">${name}</div>
-        <div class="time">${time}</div>
-        <button class="delete-btn">🗑️</button>
-      `;
-      const deleteBtn = div.querySelector(".delete-btn");
-      deleteBtn.onclick = async () => {
-        if (!currentUser) return alert("Login required to delete.");
-        if (confirm("Delete this attendance?")) await deleteDoc(doc(db, "attendance", docId));
-      };
-      attendanceList.appendChild(div);
-    }
-
-    // Penalty Functions
-    async function submitPenalty() {
+    submitPenaltyBtn.onclick = async () => {
       const name = penaltyNameInput.value.trim();
       const penalty = penaltyInput.value.trim();
-      if (!name || !penalty) return alert("Fill both name and penalty.");
+      if (!name || !penalty) return alert("Fill both fields");
       await addDoc(penaltyRef, { name, penalty, created: serverTimestamp() });
       penaltyNameInput.value = "";
       penaltyInput.value = "";
-    }
+    };
 
-    function displayPenalty(docId, name, penaltyText) {
-      const div = document.createElement("div");
-      div.className = "entry";
-
-      const nameEl = document.createElement("div");
-      nameEl.className = "name";
-      nameEl.textContent = name;
-
-      const penaltyEl = document.createElement("div");
-      penaltyEl.className = "penalty";
-      penaltyEl.textContent = penaltyText;
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.className = "delete-btn";
-      deleteBtn.textContent = "🗑️";
-      deleteBtn.onclick = async () => {
-        if (!currentUser) return alert("Login required to delete.");
-        if (confirm("Delete this penalty?")) await deleteDoc(doc(db, "penalties", docId));
-      };
-
-      const editBtn = document.createElement("button");
-      editBtn.className = "edit-btn";
-      editBtn.textContent = "✏️";
-
-      editBtn.onclick = () => {
-        if (!currentUser) return alert("Login required to edit.");
-        const input = document.createElement("input");
-        input.className = "penalty";
-        input.value = penaltyText;
-
-        const saveBtn = document.createElement("button");
-        saveBtn.className = "save-btn";
-        saveBtn.textContent = "✅";
-
-        div.replaceChild(input, penaltyEl);
-        editBtn.style.display = "none";
-        div.appendChild(saveBtn);
-
-        saveBtn.onclick = async () => {
-          const newPenalty = input.value.trim();
-          if (!newPenalty) return alert("Penalty cannot be empty.");
-          await updateDoc(doc(db, "penalties", docId), { penalty: newPenalty });
-        };
-      };
-
-      div.appendChild(nameEl);
-      div.appendChild(penaltyEl);
-      div.appendChild(editBtn);
-      div.appendChild(deleteBtn);
-      penaltyList.appendChild(div);
-    }
-
-    // Real-time Listeners
-    onSnapshot(query(attendanceRef, orderBy("created", "desc")), snapshot => {
-      attendanceList.innerHTML = "";
-      snapshot.forEach(doc => {
+    onSnapshot(query(attendanceRef, orderBy("created", "desc")), snap => {
+      attendanceList.innerHTML = "<h3>Attendance List</h3>";
+      snap.forEach(doc => {
         const data = doc.data();
         displayAttendance(doc.id, data.name, data.dateTime);
       });
     });
 
-    onSnapshot(query(penaltyRef, orderBy("created", "desc")), snapshot => {
-      penaltyList.innerHTML = "";
-      snapshot.forEach(doc => {
+    onSnapshot(query(penaltyRef, orderBy("created", "desc")), snap => {
+      penaltyList.innerHTML = "<h3>Penalty List</h3>";
+      snap.forEach(doc => {
         const data = doc.data();
         displayPenalty(doc.id, data.name, data.penalty);
       });
     });
 
-    // Auth & Events
-    markBtn.onclick = markAttendance;
-    submitPenaltyBtn.onclick = submitPenalty;
-
     loginBtn.onclick = () => {
-      const email = prompt("Admin Email:");
-      const password = prompt("Password:");
-      if (!email || !password) return;
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => alert("Login successful"))
-        .catch(err => alert("Login failed: " + err.message));
+      const email = prompt("Email:");
+      const pass = prompt("Password:");
+      signInWithEmailAndPassword(auth, email, pass)
+        .then(() => alert("Logged in"))
+        .catch(e => alert("Error: " + e.message));
     };
 
     logoutBtn.onclick = () => {
@@ -283,6 +220,5 @@
       loginBtn.style.display = user ? "none" : "inline";
       logoutBtn.style.display = user ? "inline" : "none";
     });
-  </script>
-</body>
+  </script></body>
 </html>
