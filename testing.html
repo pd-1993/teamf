@@ -5,52 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Team Friendly Portal</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
+      margin: 0;
+      padding: 20px;
       font-family: 'Segoe UI', sans-serif;
       background: #111;
       color: #fff;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
-      margin: 0;
     }
-    h1, h2 {
+    h1 {
       color: #0ff;
       text-shadow: 0 0 10px #0ff;
+      margin-bottom: 20px;
+    }
+    h2 {
+      margin-top: 30px;
+      color: #0ff;
+      text-shadow: 0 0 6px #0ff;
     }
     .section {
-      margin-top: 30px;
       width: 100%;
       max-width: 450px;
+      margin-bottom: 30px;
     }
     input, button {
+      width: 100%;
       padding: 10px;
-      margin: 5px 0;
-      border-radius: 8px;
+      margin-top: 10px;
       border: none;
+      border-radius: 8px;
       font-size: 1rem;
       outline: none;
-      width: 100%;
     }
     button {
       background: #0ff;
       color: #000;
-      box-shadow: 0 0 10px #0ff;
+      font-weight: bold;
       cursor: pointer;
+      box-shadow: 0 0 10px #0ff;
     }
     .list {
-      max-height: 300px;
-      overflow-y: auto;
       background: rgba(255,255,255,0.05);
       padding: 15px;
       border-radius: 10px;
       margin-top: 15px;
+      max-height: 300px;
+      overflow-y: auto;
       box-shadow: 0 0 10px #0ff3;
     }
     .entry {
+      padding: 10px 0;
       border-bottom: 1px solid #333;
-      padding: 8px 0;
       position: relative;
     }
     .name {
@@ -62,59 +72,63 @@
       color: #ccc;
     }
     .actions {
-      margin-top: 4px;
+      margin-top: 5px;
     }
     .delete-btn, .edit-btn, .save-btn {
-      background: transparent;
+      background: none;
       border: none;
       color: #ff0;
-      font-size: 1.1rem;
-      cursor: pointer;
+      font-size: 1rem;
       margin-right: 10px;
+      cursor: pointer;
     }
     .save-btn {
       color: #0f0;
     }
     .edit-input {
       width: 100%;
-      padding: 5px;
-      border-radius: 5px;
-      font-size: 0.95rem;
+      padding: 6px;
+      font-size: 1rem;
+      border-radius: 6px;
     }
     #loginBtn, #logoutBtn {
-      position: absolute;
+      position: fixed;
       top: 10px;
       right: 10px;
+      padding: 8px 16px;
+      background: #0ff;
+      color: #000;
+      border-radius: 8px;
+      font-weight: bold;
+      border: none;
+      box-shadow: 0 0 10px #0ff;
+      cursor: pointer;
+    }
+    #logoutBtn {
+      display: none;
     }
   </style>
 </head>
 <body>
   <h1>Team Friendly Portal</h1>
   <button id="loginBtn">Login</button>
-  <button id="logoutBtn" style="display: none;">Logout</button>
+  <button id="logoutBtn">Logout</button>
 
-  <!-- Attendance Section -->
-  <div class="section">
+  <div class="section" id="attendanceSection">
     <h2>Attendance</h2>
     <input type="text" id="nameInput" placeholder="Enter your full name" />
     <button id="markBtn">Submit Attendance</button>
-    <div class="list" id="attendanceList">
-      <h3>Attendance Records</h3>
-    </div>
+    <div class="list" id="attendanceList"></div>
   </div>
 
-  <!-- Penalty Section -->
-  <div class="section">
+  <div class="section" id="penaltySection">
     <h2>Penalty</h2>
     <input type="text" id="penaltyNameInput" placeholder="Enter name" />
     <input type="text" id="penaltyInput" placeholder="Enter penalty" />
     <button id="submitPenaltyBtn">Submit Penalty</button>
-    <div class="list" id="penaltyList">
-      <h3>Penalty Records</h3>
-    </div>
+    <div class="list" id="penaltyList"></div>
   </div>
 
-  <!-- Firebase Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import {
@@ -153,19 +167,16 @@
 
     let currentUser = null;
 
-    // Attendance submission
+    // Attendance Submit
     async function markAttendance() {
       const name = nameInput.value.trim();
       if (!name) return alert("Please enter your name.");
       const now = new Date();
-      const dateTime = now.toLocaleDateString(undefined, {
-        year: "numeric", month: "long", day: "numeric"
-      }) + " – " + now.toLocaleTimeString();
+      const dateTime = now.toLocaleString();
       await addDoc(attendanceRef, { name, dateTime, created: serverTimestamp() });
       nameInput.value = "";
     }
 
-    // Display attendance
     function displayAttendance(name, time) {
       const div = document.createElement("div");
       div.className = "entry";
@@ -173,10 +184,20 @@
       attendanceList.appendChild(div);
     }
 
-    // Display penalties
+    // Penalty Submit
+    async function submitPenalty() {
+      const name = penaltyNameInput.value.trim();
+      const penalty = penaltyInput.value.trim();
+      if (!name || !penalty) return alert("Fill in both fields.");
+      await addDoc(penaltyRef, { name, penalty, created: serverTimestamp() });
+      penaltyNameInput.value = "";
+      penaltyInput.value = "";
+    }
+
     function displayPenalty(docId, name, penalty) {
       const div = document.createElement("div");
       div.className = "entry";
+
       const nameEl = document.createElement("div");
       nameEl.className = "name";
       nameEl.textContent = name;
@@ -190,24 +211,23 @@
 
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "delete-btn";
-      deleteBtn.innerHTML = "🗑️";
+      deleteBtn.textContent = "🗑️";
 
       const editBtn = document.createElement("button");
       editBtn.className = "edit-btn";
-      editBtn.innerHTML = "✏️";
+      editBtn.textContent = "✏️";
 
-      deleteBtn.addEventListener("click", async () => {
+      deleteBtn.onclick = async () => {
         if (!currentUser) return alert("Login required to delete.");
-        if (confirm("Delete this penalty?")) {
-          await deleteDoc(doc(db, "penalties", docId));
-        }
-      });
+        if (confirm("Delete this penalty?")) await deleteDoc(doc(db, "penalties", docId));
+      };
 
-      editBtn.addEventListener("click", () => {
+      editBtn.onclick = () => {
         if (!currentUser) return alert("Login required to edit.");
         const input = document.createElement("input");
         input.className = "edit-input";
         input.value = penalty;
+
         const saveBtn = document.createElement("button");
         saveBtn.className = "save-btn";
         saveBtn.textContent = "✅ Save";
@@ -216,12 +236,12 @@
         editBtn.style.display = "none";
         actions.appendChild(saveBtn);
 
-        saveBtn.addEventListener("click", async () => {
+        saveBtn.onclick = async () => {
           const newPenalty = input.value.trim();
           if (!newPenalty) return alert("Penalty cannot be empty.");
           await updateDoc(doc(db, "penalties", docId), { penalty: newPenalty });
-        });
-      });
+        };
+      };
 
       actions.appendChild(editBtn);
       actions.appendChild(deleteBtn);
@@ -232,56 +252,42 @@
       penaltyList.appendChild(div);
     }
 
-    // Submit penalty
-    async function submitPenalty() {
-      const name = penaltyNameInput.value.trim();
-      const penalty = penaltyInput.value.trim();
-      if (!name || !penalty) return alert("Fill in both fields.");
-      await addDoc(penaltyRef, {
-        name,
-        penalty,
-        created: serverTimestamp()
-      });
-      penaltyNameInput.value = "";
-      penaltyInput.value = "";
-    }
-
-    // Event listeners
-    markBtn.addEventListener("click", markAttendance);
-    submitPenaltyBtn.addEventListener("click", submitPenalty);
-    nameInput.addEventListener("keydown", e => { if (e.key === "Enter") markAttendance(); });
-    penaltyInput.addEventListener("keydown", e => { if (e.key === "Enter") submitPenalty(); });
-
-    // Real-time updates
+    // Real-time listeners
     onSnapshot(query(attendanceRef, orderBy("created", "desc")), snapshot => {
-      attendanceList.innerHTML = "<h3>Attendance Records</h3>";
+      attendanceList.innerHTML = "";
       snapshot.forEach(doc => {
-        const d = doc.data();
-        displayAttendance(d.name, d.dateTime);
+        const data = doc.data();
+        displayAttendance(data.name, data.dateTime);
       });
     });
 
     onSnapshot(query(penaltyRef, orderBy("created", "desc")), snapshot => {
-      penaltyList.innerHTML = "<h3>Penalty Records</h3>";
+      penaltyList.innerHTML = "";
       snapshot.forEach(doc => {
-        const d = doc.data();
-        displayPenalty(doc.id, d.name, d.penalty);
+        const data = doc.data();
+        displayPenalty(doc.id, data.name, data.penalty);
       });
     });
 
+    // Event Listeners
+    markBtn.onclick = markAttendance;
+    submitPenaltyBtn.onclick = submitPenalty;
+    nameInput.addEventListener("keydown", e => { if (e.key === "Enter") markAttendance(); });
+    penaltyInput.addEventListener("keydown", e => { if (e.key === "Enter") submitPenalty(); });
+
     // Auth
-    loginBtn.addEventListener("click", () => {
+    loginBtn.onclick = () => {
       const email = prompt("Admin Email:");
       const password = prompt("Password:");
       if (!email || !password) return;
       signInWithEmailAndPassword(auth, email, password)
         .then(() => alert("Login successful"))
         .catch(err => alert("Login failed: " + err.message));
-    });
+    };
 
-    logoutBtn.addEventListener("click", () => {
+    logoutBtn.onclick = () => {
       signOut(auth).then(() => alert("Logged out"));
-    });
+    };
 
     onAuthStateChanged(auth, user => {
       currentUser = user;
